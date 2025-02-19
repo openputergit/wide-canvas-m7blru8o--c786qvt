@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockKitty AI Bot</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #FFF0F5;
+        }
+        .kitty-shadow {
+            box-shadow: 0 4px 6px -1px rgba(255, 182, 193, 0.4);
+        }
+        .kitty-gradient {
+            background: linear-gradient(135deg, #FF69B4, #FFB6C1);
+        }
+        .market-tab.active {
+            background-color: #FF69B4;
+            color: white;
+        }
+        @media (max-width: 768px) {
+            .market-tabs {
+                flex-wrap: wrap;
+            }
+            .market-tab {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #FF69B4;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="custom-scrollbar">
+    <nav class="bg-pink-100 p-4 kitty-shadow fixed w-full z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="bi bi-graph-up-arrow text-pink-600 text-2xl"></i>
+                <span class="ml-2 text-xl font-bold text-pink-600">StockKitty AI</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleTheme()" class="text-pink-600">
+                    <i class="bi bi-palette text-xl"></i>
+                </button>
+                <button onclick="toggleProfile()" class="text-pink-600">
+                    <i class="bi bi-person-circle text-xl"></i>
+                </button>
+                <button class="bg-pink-500 text-white px-4 py-2 rounded-full hover:bg-pink-600 transition">Login</button>
+                <button class="bg-white text-pink-500 px-4 py-2 rounded-full border border-pink-500 hover:bg-pink-50 transition">Register</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="pt-20">
+        <div class="container mx-auto p-4">
+            <div class="market-tabs flex justify-center space-x-4 mb-8">
+                <button class="market-tab active px-6 py-2 rounded-full" data-market="indian">Indian Stocks</button>
+                <button class="market-tab px-6 py-2 rounded-full" data-market="japanese">Japanese Stocks</button>
+                <button class="market-tab px-6 py-2 rounded-full" data-market="forex">Forex</button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-lg kitty-shadow">
+                    <h2 class="text-xl font-bold text-pink-600 mb-4">Strategy Builder</h2>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <select id="timeFrame" class="p-3 border border-pink-200 rounded-lg">
+                                <option value="">Select Time Frame</option>
+                                <option value="1m">1 Minute</option>
+                                <option value="5m">5 Minutes</option>
+                                <option value="15m">15 Minutes</option>
+                                <option value="1h">1 Hour</option>
+                                <option value="4h">4 Hours</option>
+                                <option value="1d">1 Day</option>
+                            </select>
+                            <select id="type" class="p-3 border border-pink-200 rounded-lg">
+                                <option value="">Select Type</option>
+                                <option value="intraday">Intraday</option>
+                                <option value="scalping">Scalping</option>
+                                <option value="swing">Swing Trading</option>
+                                <option value="positional">Positional</option>
+                            </select>
+                        </div>
+                        <select id="strategy" class="w-full p-3 border border-pink-200 rounded-lg">
+                            <option value="">Select Strategy</option>
+                            <option value="ma">Moving Average Crossover</option>
+                            <option value="rsi">RSI Strategy</option>
+                            <option value="macd">MACD Strategy</option>
+                            <option value="bb">Bollinger Bands</option>
+                            <option value="custom">Custom Strategy</option>
+                        </select>
+                        <div id="customStrategyFields" class="hidden space-y-4">
+                            <input type="text" placeholder="Strategy Name" class="w-full p-3 border border-pink-200 rounded-lg">
+                            <textarea placeholder="Strategy Rules" class="w-full p-3 border border-pink-200 rounded-lg h-24"></textarea>
+                            <div class="flex space-x-2">
+                                <input type="number" placeholder="Risk %" class="w-1/2 p-3 border border-pink-200 rounded-lg">
+                                <input type="number" placeholder="Reward %" class="w-1/2 p-3 border border-pink-200 rounded-lg">
+                            </div>
+                        </div>
+                        <button onclick="analyzeMarket()" class="w-full bg-pink-500 text-white p-3 rounded-lg hover:bg-pink-600">
+                            Analyze Market
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg kitty-shadow">
+                    <h2 class="text-xl font-bold text-pink-600 mb-4">Trading Signals</h2>
+                    <div id="analysisResults" class="space-y-4 max-h-96 overflow-y-auto custom-scrollbar">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="profileModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50">
+        <div class="bg-white p-6 rounded-lg w-96 mx-auto mt-20">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-pink-600">Profile Settings</h2>
+                <button onclick="toggleProfile()" class="text-gray-500"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div class="text-center">
+                    <div class="w-24 h-24 rounded-full bg-pink-200 mx-auto mb-2 flex items-center justify-center">
+                        <i class="bi bi-person text-4xl text-pink-600"></i>
+                    </div>
+                    <h3 class="font-bold text-pink-600">Trader Profile</h3>
+                </div>
+                <div class="space-y-2">
+                    <input type="email" placeholder="Email" class="w-full p-3 border border-pink-200 rounded-lg">
+                    <input type="password" placeholder="Password" class="w-full p-3 border border-pink-200 rounded-lg">
+                    <select class="w-full p-3 border border-pink-200 rounded-lg">
+                        <option>Trading Experience</option>
+                        <option>Beginner</option>
+                        <option>Intermediate</option>
+                        <option>Advanced</option>
+                    </select>
+                    <div class="flex justify-between">
+                        <label class="flex items-center">
+                            <input type="checkbox" class="form-checkbox text-pink-500">
+                            <span class="ml-2">Email Alerts</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="form-checkbox text-pink-500">
+                            <span class="ml-2">Mobile Notifications</span>
+                        </label>
+                    </div>
+                </div>
+                <button class="w-full bg-pink-500 text-white p-3 rounded-lg hover:bg-pink-600">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTheme = 'default';
+        const themes = {
+            default: { bg: '#FFF0F5', primary: '#FF69B4' },
+            dark: { bg: '#2D3748', primary: '#9F7AEA' },
+            light: { bg: '#F7FAFC', primary: '#4299E1' }
+        };
+
+        function toggleTheme() {
+            const themeKeys = Object.keys(themes);
+            const currentIndex = themeKeys.indexOf(currentTheme);
+            currentTheme = themeKeys[(currentIndex + 1) % themeKeys.length];
+            applyTheme();
+        }
+
+        function applyTheme() {
+            document.body.style.backgroundColor = themes[currentTheme].bg;
+            document.querySelectorAll('.text-pink-600').forEach(el => {
+                el.style.color = themes[currentTheme].primary;
+            });
+        }
+
+        function toggleProfile() {
+            document.getElementById('profileModal').classList.toggle('hidden');
+        }
+
+        document.getElementById('strategy').addEventListener('change', (e) => {
+            const customFields = document.getElementById('customStrategyFields');
+            customFields.classList.toggle('hidden', e.target.value !== 'custom');
+        });
+
+        document.querySelectorAll('.market-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.market-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                analyzeMarket();
+            });
+        });
+
+        function analyzeMarket() {
+            const timeFrame = document.getElementById('timeFrame').value;
+            const strategy = document.getElementById('strategy').value;
+            const market = document.querySelector('.market-tab.active').dataset.market;
+            
+            if (!timeFrame || !strategy) {
+                alert('Please select both time frame and strategy');
+                return;
+            }
+
+            const results = generateAnalysis(market);
+            displayResults(results);
+        }
+
+        function generateAnalysis(market) {
+            const stocks = {
+                indian: ['RELIANCE', 'TCS', 'HDFC', 'INFY', 'WIPRO', 'BAJAJ', 'ICICI', 'SBI'],
+                japanese: ['7203.T', '9984.T', '6758.T', '7974.T', '6861.T'],
+                forex: ['USD/JPY', 'EUR/USD', 'GBP/USD', 'AUD/USD', 'USD/CAD']
+            };
+
+            return stocks[market].map(symbol => ({
+                symbol,
+                signal: Math.random() > 0.5 ? 'Buy' : 'Sell',
+                confidence: Math.round(Math.random() * 100),
+                target: Math.round(Math.random() * 1000 * 100) / 100,
+                stopLoss: Math.round(Math.random() * 900 * 100) / 100,
+                strength: ['Strong', 'Moderate', 'Weak'][Math.floor(Math.random() * 3)]
+            }));
+        }
+
+        function displayResults(results) {
+            const container = document.getElementById('analysisResults');
+            container.innerHTML = results.map(result => `
+                <div class="border border-pink-100 p-4 rounded-lg hover:shadow-lg transition">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-pink-600">${result.symbol}</h3>
+                        <span class="px-3 py-1 ${result.signal === 'Buy' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'} rounded-full text-sm">
+                            ${result.signal}
+                        </span>
+                    </div>
+                    <div class="mt-2 grid grid-cols-2 gap-2 text-sm">
+                        <p>Confidence: <span class="font-bold">${result.confidence}%</span></p>
+                        <p>Strength: <span class="font-bold">${result.strength}</span></p>
+                        <p>Target: <span class="font-bold text-green-600">₹${result.target}</span></p>
+                        <p>Stop Loss: <span class="font-bold text-red-600">₹${result.stopLoss}</span></p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Initialize with default market analysis
+        document.addEventListener('DOMContentLoaded', analyzeMarket);
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
